@@ -4,8 +4,9 @@ After=network.target
 Requires=network.target
 
 [Service]
-User=cronman
-Group=cronman
+# the user that runs the service
+User=root
+Group=root
 Type=notify
 NotifyAccess=all
 LimitNOFILE=infinity
