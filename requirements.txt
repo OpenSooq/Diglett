@@ -1,0 +1,6 @@
+python2-paramiko
+python-pymongo
+python-IPy
+python-tools
+uwsgi
+python-bottle

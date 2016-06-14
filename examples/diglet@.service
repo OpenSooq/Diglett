@@ -1,0 +1,21 @@
+[Unit]
+Description=diglett service on port %I
+After=network.target
+Requires=network.target
+
+[Service]
+User=cronman
+Group=cronman
+Type=notify
+NotifyAccess=all
+LimitNOFILE=infinity
+CPUAccounting=True
+BlockIOAccounting=True
+MemoryAccounting=True
+Restart=always
+KillSignal=SIGQUIT
+ExecStart=/bin/bash -l -c "cd ~/diglett/ && exec uwsgi --http-socket 0.0.0.0:%i ./uwsgi.ini "
+ExecReload=/bin/bash -l -c "touch ~/diglett/reload.txt"
+
+[Install]
+WantedBy=multi-user.target
