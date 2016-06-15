@@ -6,7 +6,7 @@ Installation
 --------------------
 This guide is orianted to CentOS/Fedora Systems.
 
-- As install Nginx and Mongodb as DB.
+- Install Nginx as a webserver and Mongodb as DB.
 ```
 $ sudo dnf update -y
 $ sudo dnf install -y nginx git python-pip mongodb-server mongodb
