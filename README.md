@@ -49,6 +49,9 @@ admin= username
 manager_url= http://PROJECT_IP
 ...
 ```
+- Initialize the database
+```
+$ mongo diglett < examples/initialize_db.js
 
 - Start and enable services :
 ```
