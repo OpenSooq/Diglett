@@ -1,4 +1,4 @@
-python2-paramiko
+python-paramiko
 python-pymongo
 python-IPy
 python-tools
