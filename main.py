@@ -176,7 +176,7 @@ def addCronJob():
 	if None in [taskname,depends,command,time,project]:
 		return HTTPResponse(status=400,body=dsumps({'error' : 'invalid request'}))
 	db_crons = functions.mongoConn('crons')
-	if db_crons.find({'name' : taskname}).count() > 0 :
+	if db_crons.count({'name' : taskname}) > 0 :
 		return HTTPResponse(status=400,body=dumps({'error' : 'taskname is already used'}))
 	depends_list = [] if (depends == [])  else depends.split(',')
 	if db_crons.insert({'name' : taskname, 'project' : project, 'description' :  description, 'depends_on' : depends_list, 'active' :active, 'command' : command, 'time' : time, 'last_run_at' : datetime.datetime.fromtimestamp(0)}):
@@ -193,6 +193,20 @@ def deleteCron():
 	if db_crons.delete_many({'name' : taskname}).deleted_count > 0 :
 		return HTTPResponse(status=200,body=dumps({'status' : 'success'}))
 	else: return HTTPResponse(status=200,body=dumps({'status' : 'failed'}))
+
+#/addproject?name=project_name&user=opensooq
+@route('/addproject')
+def addProject():
+	name = request.query.get('name')
+	user = request.query.get('user')
+	if None in [name,user]:
+		return HTTPResponse(status=400,body=dsumps({'error' : 'invalid request'}))
+	db_projects = functions.mongoConn('projects')
+	if db_projects.count({'name' : name}) > 0 :
+		return HTTPResponse(status=200,body=dumps({'status' : 'failed, name already exist'}))
+	if db_projects.insert({'name' : name, 'user' : user}).inserted_count > 0 :
+		return HTTPResponse(status=200,body=dumps({'status' : 'success'}))
+	return HTTPResponse(status=200,body=dumps({'status' : 'failed'}))
 
 #/generate?project=project_name&update=[0,1]
 # update = 0 view # update = 1 update on all hosts
