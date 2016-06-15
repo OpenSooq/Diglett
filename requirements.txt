@@ -3,4 +3,5 @@ python-pymongo
 python-IPy
 python-tools
 uwsgi
+uwsgi-plugin-python
 python-bottle
