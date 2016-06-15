@@ -1,0 +1,111 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+    <head>
+        <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+        <title>Diglett</title>
+        <link rel="stylesheet" type="text/css" href="css/bootstrap.css"/>
+        <link rel="stylesheet" type="text/css" href="css/styles.css"/>
+        <link rel="stylesheet" type="text/css" href="http://ajax.googleapis.com/ajax/libs/jqueryui/1.8.21/themes/redmond/jquery-ui.css" />
+        <link rel="stylesheet" type="text/css" href="css/jquery.ptTimeSelect.css" />
+    </head>
+    <body>
+        <nav class="navbar navbar-default">
+            <div class="container-fluid">
+                <div class="navbar-header text-center">
+                  <a class="navbar-brand" href="#">Diglett</a>
+                </div>
+            </div>
+        </nav>
+        <div class="container">
+            <div class="row">
+                <div class="col-md-2">
+                    <span class="bold inline mt5">Select project</span>
+                </div>
+                <div class="col-md-10" >
+                    <select class="mb15" id="default-option"></select>
+                </div>
+            </div>
+            <div class="panel panel-default">
+                <table class="table" id="hostsTable">
+                    <form>
+                        <tr id="hosts">
+                            <th colspan="3">
+                                <span class="font16">Servers</span>
+                            </th>
+                        </tr>
+                    </form>
+                    <tr>
+                        <td colspan="3">
+                            <button class="addNewBtn" onclick="addMoreRows(this.form);">ADD NEW HOST</button>
+                        </td>
+                    </tr>
+                </table>
+            </div>
+        </div>
+        <div class="container">
+            <input type="text" placeholder="Name" name="searchName"  class="search">
+                <span id="sample1">
+                    <input type="text" placeholder="From"  name="s1Time1" value="" class="sample1 search"/>
+                    <input type="text" placeholder="To" name="s1Time2" value="" class="sample1 search"/>
+                </span>
+            <button class="btn btn-primary" onclick="search()">Search</button>
+        </div>
+        <div class="container">
+            <div class="panel panel-default">
+                  <table class="table scrolling" id="cron">
+                        <form id="command">
+                            <tr id="commands">
+                                <th><span class="font16">Task Name</span></th>
+                                <th><span class="font16">Time</span></th>
+                                <th colspan="2"><span class="font16">Command</span></th>
+                                <th><span class="font16">Last $?</span></th>
+                                <th><span class="font16">Last run</span></th>
+                                <th colspan="2"></th>
+                            </tr>
+                        </form>
+                    <tr>
+                        <td colspan="8">
+                            <button class="addNewBtn" onclick="addMoreRows2(this.form);">ADD NEW COMMAND</button>
+                        </td>
+                    </tr>
+                  </table>
+            </div>
+            <div class="text-center mb15">
+                <button class="broadcast" onclick="addCommandView();">Broadcast</button>
+            </div>
+            <div class=" mb15">
+                <pre id="command-view">
+                    <?php echo ($broadcast);?>
+                </pre>
+            </div>
+            <div class="text-center mb15">
+                <button class="continue" onclick="brodcastConfirmation()">Continue</button>
+            </div>
+        </div>
+        <!-- Modal -->
+        <div class="modal fade" id="showModal" tabindex="-1" role="dialog" aria-labelledby="myModalLabel">
+            <div class="modal-dialog" role="document">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+                        <h4 class="modal-title" id="myModalLabel">Confirmation</h4>
+                    </div>
+                    <div class="modal-body">
+                    Are you sure you want to continue?
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-default" data-dismiss="modal">Cancel</button>
+                        <button type="button" class="btn btn-primary" onclick="brodcast()">Confirm</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <script type="text/javascript" src="js/jquery.min.js"></script>
+        <script language="JavaScript" type="text/javascript" src="//ajax.googleapis.com/ajax/libs/jqueryui/1.10.0/jquery-ui.min.js"></script>
+        <script type="text/javascript" src="js/jquery.ptTimeSelect.js"></script>
+        <script type="text/javascript" src="js/bootstrap.min.js"></script>
+        <script type="text/javascript" src="js/common.js"></script>
+    </body>
+</html>
