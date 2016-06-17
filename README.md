@@ -1,5 +1,15 @@
 # Diglett
-A cron management system that manage all your cronjobs over multiple servers without modifying crontab. Handles locking, logging, error emails, and more.
+A cron management system that manage all your cronjobs over multiple servers without modifying crontab. Handles locking, logging, and more.
+
+![screen shot 2016-06-15 at 10 38 34 pm](https://cloud.githubusercontent.com/assets/4533327/16156450/fd6a956a-34bc-11e6-9cb5-15c9a236772e.png)
+
+You can choose any project you have and see all crons with time of execution and last status of every cron. In addition to manage these crons via UI. 
+
+<img width="981" alt="screen shot 2016-06-17 at 6 58 50 pm" src="https://cloud.githubusercontent.com/assets/4533327/16156559/8e663f56-34bd-11e6-99f1-48b297cd24f3.png">
+
+You can broadcast your task to all your servers. 
+
+![screen shot 2016-06-15 at 10 39 21 pm](https://cloud.githubusercontent.com/assets/4533327/16156543/7c52f458-34bd-11e6-8de1-897b5b236d1f.png)
 
 
 Installation
