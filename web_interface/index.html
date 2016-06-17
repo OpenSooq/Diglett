@@ -22,9 +22,10 @@
                 <div class="col-md-2">
                     <span class="bold inline mt5">Select project</span>
                 </div>
-                <div class="col-md-10" >
+                <div class="col-md-8" >
                     <select class="mb15" id="default-option"></select>
                 </div>
+                <button class="btn btn-primary" onclick="addProjectPopup()">Add project</button>
             </div>
             <div class="panel panel-default">
                 <table class="table" id="hostsTable">
@@ -97,6 +98,28 @@
                     <div class="modal-footer">
                         <button type="button" class="btn btn-default" data-dismiss="modal">Cancel</button>
                         <button type="button" class="btn btn-primary" onclick="brodcast()">Confirm</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="modal fade" id="addProject" tabindex="-1" role="dialog" aria-labelledby="myModalLabel">
+            <div class="modal-dialog" role="document">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+                        <h4 class="modal-title" id="myModalLabelAddProject">Add New Project</h4>
+                    </div>
+                    <div class="modal-body">
+                        Project name:<br>
+                        <span id="project-name-span"></span>
+                        <input type="text" name="prjectName"><br>
+                        User name:<br>
+                        <span id="user-name-span"></span>
+                        <input type="text" name="userName"><br>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-default" data-dismiss="modal">Cancel</button>
+                        <button type="button" class="btn btn-primary" onclick="addProject()">Confirm</button>
                     </div>
                 </div>
             </div>

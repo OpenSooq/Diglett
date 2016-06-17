@@ -204,8 +204,9 @@ def addProject():
 	db_projects = functions.mongoConn('projects')
 	if db_projects.count({'name' : name}) > 0 :
 		return HTTPResponse(status=200,body=dumps({'status' : 'failed, name already exist'}))
-	if db_projects.insert({'name' : name, 'user' : user}).inserted_count > 0 :
-		return HTTPResponse(status=200,body=dumps({'status' : 'success'}))
+	if db_projects.insert_one({'name' : name, 'user' : user, 'hosts' : [], 'active_host' : ""}):
+		if db_projects.count({'name' : name}) > 0 :
+			return HTTPResponse(status=200,body=dumps({'status' : 'success'}))
 	return HTTPResponse(status=200,body=dumps({'status' : 'failed'}))
 
 #/generate?project=project_name&update=[0,1]

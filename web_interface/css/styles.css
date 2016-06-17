@@ -158,7 +158,9 @@ input.switch:checked ~ label:after
 margin-left: 74px;
 }
 
-
 .search{
 	width: 18%!important;
 }
+
+#project-name-span
+{color: #a94442;}

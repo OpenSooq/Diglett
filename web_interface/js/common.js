@@ -133,6 +133,35 @@ function retriveActiveHosts(project){
 	return false;
 }
 
+function addProjectPopup(){
+	$('#addProject').modal('show');
+
+	return false;
+}
+
+function addProject(){
+	var projectName = $("input[name='prjectName']").val();
+	var userName    = $("input[name='userName']").val();
+
+	$.ajax({
+		url: url+'/addproject?name='+projectName+'&user='+userName,
+		type: 'GET',
+		dataType: 'json',
+		complete: function (response) {
+			var responseStatus = jQuery.parseJSON(response.responseText)
+			if(responseStatus.status=='failed, name already exist') {
+				$('#project-name-span').text('project name already exist');
+				return false;
+			}
+			$('#addProject').modal('hide');
+			window.location.href = '/index.html?';
+
+		}
+	});
+
+	return false;
+}
+
 function retrieveHosts(project,activeHost){
 	$.ajax({
 		url:url+'/hosts?project='+project,
