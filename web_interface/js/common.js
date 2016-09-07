@@ -525,7 +525,9 @@ function compelteAjax(response) {
 			'<span>'+commands[count]['command']+'</span>' +
 			'</td>' +
 			'<td class="vMiddle text-center">' +
-			'<img src="'+src+'" alt="Smiley face" height="25" width="25">'+
+			'<a href="'+url+'/last_log?taskname='+commands[count]['name']+'" target="_blank">'+
+			'<img src="'+src+'" alt="Smiley face" height="25" width="25" >'+
+			'</a>'+
 			'</td>' +
 			'<td class="vMiddle text-center">' +
 			'<a href="#" class="blueText">'+date.toString()+'</a>' +

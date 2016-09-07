@@ -274,6 +274,20 @@ def activateHost():
 	logger.warning('number of modified projects while activating a host is not 1, \n the request : %r',request.body.read())
 	return HTTPResponse(status=200,body=dumps({'error' : 'something went wrong.'}))
 
+#!/last_log?taskname=task_name
+@route('/last_log')
+def lastLog():
+	taskname = request.query.get('taskname')
+	if None in [taskname]:
+		return HTTPResponse(status=400,body={'error' : 'invalid request'})
+	db_history = functions.mongoConn('history')
+	#db.history.find({name : "gulpin.notify_no_posts", log : {$exists : true}},{log : 1, _id : 0}).sort({start_time : -1}).limit(1)
+	log = db_history.find({'name' : taskname, "log" : {"$exists" : True}},{"log" : True, "_id" : False},sort=[('start_time', pymongo.DESCENDING)], limit=1)
+	for doc in log :
+		data = '<pre>%s</pre>' %doc['log']
+		break
+	return HTTPResponse(status=200,body=data)
+
 ############
 #### MAIN
 ############
