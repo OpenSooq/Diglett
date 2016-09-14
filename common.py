@@ -3,6 +3,7 @@ from pymongo import MongoClient
 from subprocess import Popen,PIPE,STDOUT
 from bson.json_util import dumps
 from IPy import IP
+import requests
 import paramiko
 import datetime
 import logging
@@ -82,13 +83,19 @@ class Functions(object):
 			crons = self.mongoConn('crons')
 			history = self.mongoConn('history')
 			if int(status_code) != 0 :
-				try: self.emailInfraTeam(emails=config.get('alert','emails'),object=log,subject='%s failed' %taskname)
-				except: pass
+				try: 
+					self.emailInfraTeam(emails=config.get('alert','emails'),message=log,subject='%s failed' %taskname)
+					if bool(config.get('alert','simplePushEnabled')) : 
+						self.simplePushNotification(title='%s failed' %taskname, message="Please check your email for details.")
+				except Exception as e: logger.error('failed to send email : %r',e)
 			update_cron = crons.update_one({ "name" : taskname},{ "$set" : { "last_run_at" : now, "last_run_status" : status_code }})
 			update_history = history.update_one({"name" : taskname, "start_time" : stime},{ "$set" : {"status_code" : status_code, "running_time" : running_time , "log" : log}})
 		except Exception as e:
 			logger.error("could not update history document : %r",e)
-			try: self.emailInfraTeam(emails=config.get('alert','emails'),subject='Insert tasks log in mongo failed',object=e)
+			try: 
+				self.emailInfraTeam(emails=config.get('alert','emails'),subject='Insert tasks log in mongo failed',message=e)
+				if bool(config.get('alert','simplePushEnabled')) : 
+						self.simplePushNotification(title='Insert tasks log in mongo failed', message=str(e))
 			except: pass
 			if not os.path.isdir('%s/failed' %here): os.mkdir('%s/failed' %here)
 			fname = '%s/failed/%s_log_%s' %(here,taskname,str(now))
@@ -104,7 +111,7 @@ class Functions(object):
 		return True
 
 	def emailInfraTeam(self,emails,subject,message):
-		command = 'echo \'%r\' | mail -s \'%s\' %r' %(message,subject,emails)
+		command = 'echo %r | mail -s "%s"  %r' %(message,subject,emails)
 		process = Popen(command, stdout=PIPE, stderr=STDOUT, shell=True)
 		out, err = process.communicate()
 		if err:
@@ -164,3 +171,11 @@ class Functions(object):
 		except Exception as e:
 			logger.error('exception while trying to open_sftp or exec_command : %r',e)
 			return False
+
+	def simplePushNotification(self,title,message,key=config.get('alert','simplePushKey')):
+		request_url='%s/%s/%s/%s' %(config.get('alert','simplePushURL'),key,title,message)
+		req=requests.get(request_url)
+		if req.status_code != requests.codes.ok :
+			logger.error("Failed to send push notification, URL= %r, RESPONSE= %r",req.url, req.text)
+			return False
+		return True
