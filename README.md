@@ -11,6 +11,9 @@ You can broadcast your task to all your servers.
 
 ![screen shot 2016-06-15 at 10 39 21 pm](https://cloud.githubusercontent.com/assets/4533327/16156543/7c52f458-34bd-11e6-8de1-897b5b236d1f.png)
 
+Read More 
+--------------------
+On Opensooq Engineering Blog : http://engineering.opensooq.com/manage-cronjobs-over-multiple-servers/
 
 Installation
 --------------------
@@ -18,8 +21,8 @@ This guide is orianted to CentOS/Fedora Systems.
 
 - Install Nginx as a webserver and Mongodb as DB.
 ```
-$ sudo dnf update -y
-$ sudo dnf install -y nginx git python-pip mongodb-server mongodb
+$ sudo yum update -y
+$ sudo yum install -y nginx git mongodb-server mongodb
 ```
 
 - Clone diglett
@@ -34,7 +37,7 @@ $ sudo cp ~/diglett/examples/nginx.conf /etc/nginx/conf.d/diglett.conf
 - Install required packages
 ```
 $ cat ~/diglett/requirements.txt | grep -v ^# | xargs sudo dnf install -y
-$ sudo pip install pymongo==3.0.0
+$ sudo yum install python-pip && sudo pip install pymongo==3.0.0
 ```
 
 - Change the UID and GID in uwsgi.ini and in diglett@.service :
