@@ -19,11 +19,11 @@ Alerting
 --------------------
 Diglett uses two methods of alerting for now, Email and Push Notifications.
 
-- Emails
+### Emails
 
 Mainly depends on mail-utlis on linux system, therefore it should be installed on your Diglett Server.
 
-- Push Notification
+### Push Notification
 
 For now, Diglett is using only one push notification backend called SimplePush. To use it, you should install the application on your Android and insert the key in config.ini file.
 
