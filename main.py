@@ -10,6 +10,7 @@ import sys
 import re
 import logging
 import datetime
+import pymongo
 
 # Config Parsing
 config = SafeConfigParser()
@@ -46,7 +47,7 @@ def startSignal():
 #POST /finish -F log=@/path/log/file -F status=$? -F task=task_name
 @route('/finished',method='POST')
 def finishSignal():
-	status= int(request.forms.get('status'))
+	status= request.forms.get('status')
 	task= request.forms.get('task')
 	log_file= request.files.get('log')
 	start_time = int(request.forms.get('start_time'))
@@ -152,14 +153,12 @@ def editCrons():
 		db_result = db_crons.update_many({'name' : taskname},{'$set': {'name' : new_value_list[name_index]}})
 	for option in options_list:
 		index = options_list.index(option)
-		if option == 'name' :
-			pass
+		if option == 'name' : pass
 		else:
 			try:
 				new_name
 				name = new_name
-			except NameError:
-				name = taskname
+			except NameError: name = taskname
 			db_result = db_crons.update_many({'name' : name },{'$set': { option : new_value_list[index]}})
 	return HTTPResponse(status=200,body=dumps({'status' : 'sucess'}))
 
@@ -237,7 +236,7 @@ def update():
 				failed_count += 1
 				failed_host[failed_count] = host
 				message = '[ERROR] Broadcasting crontab to host=%s from project=%s failed.\n Sending email to infrateam.' %(ipaddr,project_name)
-				functions.emailInfraTeam(emails=config.get('alert','emails'),subject='Broadcasting ',object=message)
+				functions.notifyAdmin(subject='Diglett : Brodcasting Failed',message=message)
 				if not failed_count :
 					return HTTPResponse(status=200,body=dumps({'status' : 'success'}))
 				else:
@@ -265,8 +264,7 @@ def listProjects():
 def activateHost():
 	project = request.query.get('project')
 	host = request.query.get('host')
-	if None in [project,host]:
-		return HTTPResponse(status=400,body={'error' : 'invalid request'})
+	if None in [project,host]: return HTTPResponse(status=400,body={'error' : 'invalid request'})
 	db_projects = functions.mongoConn('projects')
 	update = db_projects.update_one({'name' : project},{'$set': { 'active_host' : host } })
 	if update.modified_count == 1 :
@@ -278,8 +276,7 @@ def activateHost():
 @route('/last_log')
 def lastLog():
 	taskname = request.query.get('taskname')
-	if None in [taskname]:
-		return HTTPResponse(status=400,body={'error' : 'invalid request'})
+	if None in [taskname]: return HTTPResponse(status=400,body={'error' : 'invalid request'})
 	db_history = functions.mongoConn('history')
 	#db.history.find({name : "gulpin.notify_no_posts", log : {$exists : true}},{log : 1, _id : 0}).sort({start_time : -1}).limit(1)
 	log = db_history.find({'name' : taskname, "log" : {"$exists" : True}},{"log" : True, "_id" : False},sort=[('start_time', pymongo.DESCENDING)], limit=1)
@@ -287,11 +284,11 @@ def lastLog():
 		data = '<pre>%s</pre>' %doc['log']
 		break
 	return HTTPResponse(status=200,body=data)
-
+	
 ############
 #### MAIN
 ############
-if __name__ == '__main__':
+if __name__ == "__main__" :
 	run(host=config.get('bottle','host'), port=config.get('bottle','port'), debug=True)
 else:
 	application = default_app()
