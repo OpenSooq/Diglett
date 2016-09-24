@@ -35,16 +35,15 @@ class Functions(object):
 			ssh.connect(hostname=host,port=port,username=user)
 			return ssh
 		except Exception as e:
-			logger.error('failed to connect to host=%r on port=%r with user=%r, error : %r',host,port,user,e)
+			logger.error('Failed to connect to host=%r on port=%r with user=%r, error : %r',host,port,user,e)
 			return None
 
 	def checkVaildIP(self,ipaddr):
 		if "." not in ipaddr: return False
-		try:
-			IP(ipaddr)
-			return True
+		try: IP(ipaddr)
 		except ValueError:
 			return False
+		return True
 
 	def getProjectHosts(self,project):
 		projects = self.mongoConn('projects')
@@ -83,42 +82,13 @@ class Functions(object):
 			crons = self.mongoConn('crons')
 			history = self.mongoConn('history')
 			if int(status_code) != 0 :
-				try: 
-					self.emailInfraTeam(emails=config.get('alert','emails'),message=log,subject='%s failed' %taskname)
-					if bool(config.get('alert','simplePushEnabled')) : 
-						self.simplePushNotification(title='%s failed' %taskname, message="Please check your email for details.")
-				except Exception as e: logger.error('failed to send email : %r',e)
+				self.notifyAdmin(subject='Diglett: % failed'%taskname, message=log) 
 			update_cron = crons.update_one({ "name" : taskname},{ "$set" : { "last_run_at" : now, "last_run_status" : status_code }})
 			update_history = history.update_one({"name" : taskname, "start_time" : stime},{ "$set" : {"status_code" : status_code, "running_time" : running_time , "log" : log}})
 		except Exception as e:
 			logger.error("could not update history document : %r",e)
-			try: 
-				self.emailInfraTeam(emails=config.get('alert','emails'),subject='Insert tasks log in mongo failed',message=e)
-				if bool(config.get('alert','simplePushEnabled')) : 
-						self.simplePushNotification(title='Insert tasks log in mongo failed', message=str(e))
-			except: pass
-			if not os.path.isdir('%s/failed' %here): os.mkdir('%s/failed' %here)
-			fname = '%s/failed/%s_log_%s' %(here,taskname,str(now))
-			temp_log = open(fname,'w')
-			data= '''
-				name : %s
-				status_code  : %s
-				running_time : %s
-				log : %s
-				''' %(taskname,status_code, running_time,log)
-			temp_log.write(data)
-			temp_log.close()
+			self.notifyAdmin(subject='Diglett: Warning',message='Could not update hisotry document with error : %r' %e)
 		return True
-
-	def emailInfraTeam(self,emails,subject,message):
-		command = 'echo %r | mail -s "%s"  %r' %(message,subject,emails)
-		process = Popen(command, stdout=PIPE, stderr=STDOUT, shell=True)
-		out, err = process.communicate()
-		if err:
-			logger.error('failed to send email %r',err)
-			return False
-		else:
-			return not int(process.returncode)
 
 	def hostsOfProject(self,project):
 		db_projects = self.mongoConn('projects')
@@ -171,11 +141,39 @@ class Functions(object):
 		except Exception as e:
 			logger.error('exception while trying to open_sftp or exec_command : %r',e)
 			return False
-
-	def simplePushNotification(self,title,message,key=config.get('alert','simplePushKey')):
-		request_url='%s/%s/%s/%s' %(config.get('alert','simplePushURL'),key,title,message)
-		req=requests.get(request_url)
-		if req.status_code != requests.codes.ok :
-			logger.error("Failed to send push notification, URL= %r, RESPONSE= %r",req.url, req.text)
-			return False
+	
+	def sendEmailSMTP(self,subject,message):
+		# To do
 		return True
+
+	def sendSimplePushNotification(self,title,message,keys=config.get('simplepush','keys')):
+		for key in keys.split(','):
+			request_url='%s/%s/%s/%s' %(config.get('simplepush','URL'),key,title,message)
+			req=requests.get(request_url)
+			if req.status_code != requests.codes.ok :
+				logger.error("Failed to send push notification to Key=%r, URL= %r, RESPONSE= %r",key,req.url, req.text)
+		return True
+	
+	def basicEmailUtil(self,subject,message):
+		command = 'echo %r | mail -s "%s"  %r' %(message,subject,config.get('email-util','mail_to'))
+		process = Popen(command, stdout=PIPE, stderr=STDOUT, shell=True)
+		out, err = process.communicate()
+		if err:
+			logger.error('Failed to send email %r',err)
+			return False
+		else: return not int(process.returncode)
+		
+	def notifyAdmin(self,subject,message):
+		alerting_method_function={
+			'basic-email' : self.basicEmailUtil,
+			'smtp' : self.sendEmailSMTP,
+			'simplepush' : self.sendSimplePushNotification
+		}
+		notifying_methods=config.get('alert','methods')
+		if not notifying_methods : return True
+		for method in notifying_methods.split(',') : 
+			if not alerting_method_function.get(method) : 
+				logger.error('Unexpected method [%r] in alerting method in config.ini',method)
+				continue
+			if not alerting_method_function[method](subject,message):
+				logger.error('Failed to notify using method %r',alerting_method_function)
