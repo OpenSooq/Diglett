@@ -82,7 +82,7 @@ class Functions(object):
 			crons = self.mongoConn('crons')
 			history = self.mongoConn('history')
 			if int(status_code) != 0 :
-				self.notifyAdmin(subject='Diglett: % failed'%taskname, message=log) 
+				self.notifyAdmin(subject='Diglett: %s failed'%taskname, message=log) 
 			update_cron = crons.update_one({ "name" : taskname},{ "$set" : { "last_run_at" : now, "last_run_status" : status_code }})
 			update_history = history.update_one({"name" : taskname, "start_time" : stime},{ "$set" : {"status_code" : status_code, "running_time" : running_time , "log" : log}})
 		except Exception as e:
