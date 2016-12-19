@@ -1,7 +1,7 @@
 from bottle import Bottle,run, route, request, default_app, HTTPResponse, response
 from ConfigParser import SafeConfigParser
 from bson.json_util import dumps
-from common import Functions
+from common import DiglettCommon
 import logging
 import datetime
 import pymongo
@@ -25,7 +25,7 @@ logging.debug("logging started")
 logger = logging.getLogger(__name__)
 
 app = application = Bottle()
-functions = Functions()
+common = DiglettCommon()
 
 #/ping
 @route('/ping',method='GET')
@@ -39,7 +39,7 @@ def startSignal():
 	start_time= int(request.query.get('time'))
 	if None in [task,start_time]:
 		return HTTPResponse(status=400,body=dumps({'error' : 'invalid request'}))
-	db_conn = functions.mongoConn('history')
+	db_conn = common.mongoConn('history')
 	if not db_conn.insert_one({"name" : task,"start_time" : start_time}):
 		return HTTPResponse(status=500,body=dumps({'status' : 'failed'}))
 	return HTTPResponse(status=200,body=dumps({'status' : 'sucess'}))
@@ -55,7 +55,7 @@ def finishSignal():
 	if not task:
 		logger.info("invalid /finish request.")
 		return HTTPResponse(status=400,body=dumps({'error' : 'invalid request'}))
-	if functions.insertFinishedTask(taskname=task,status_code=status,log=log_data,stime=start_time):
+	if common.insertFinishedTask(taskname=task,status_code=status,log=log_data,stime=start_time):
 		return HTTPResponse(status=200,body=dumps({'status' : 'success'}))
 
 #/hosts?project=project_name
@@ -63,7 +63,7 @@ def finishSignal():
 def hostsOfProject():
 	project_name = request.query.get('project')
 	if not project_name : return HTTPResponse(status=400,body=dumps({'error' : 'invalid request'}))
-	return functions.hostsOfProject(project_name)
+	return common.hostsOfProject(project_name)
 
 #/addhost?project=project_name&host=192.159.213.42:port
 @route('/addhost',method='GET')
@@ -72,12 +72,12 @@ def addHostToProject():
 	hoststr = request.query.get('host')
 	host = hoststr.split(':')[0]
 	port = hoststr.split(':')[1]
-	if not project_name or not functions.checkVaildIP(host) or not str(port).isdigit():
+	if not project_name or not common.checkVaildIP(host) or not str(port).isdigit():
 		return HTTPResponse(status=400,body=dumps({'error' : 'invalid request'}))
-	db_projects = functions.mongoConn('projects')
+	db_projects = common.mongoConn('projects')
 	host_exists = db_projects.find({"name" : project_name, "hosts" : hoststr})
 	if host_exists.count() > 0 : return HTTPResponse(status=200,body={'status' : 'failed, host already exists'})
-	if functions.addHost(project=project_name,ipaddr=host,port=port) :
+	if common.addHost(project=project_name,ipaddr=host,port=port) :
 		return HTTPResponse(status=200,body={'status' : 'sucess'})
 	return HTTPResponse(status=200,body={'status' : 'failed'})
 
@@ -88,7 +88,7 @@ def delHostFromProject():
 	hoststr = request.query.get('host')
 	if None in [project_name,hoststr]:
 		return HTTPResponse(status=400,body=dumps({'error' : 'invalid request'}))
-	db_projects = functions.mongoConn('projects')
+	db_projects = common.mongoConn('projects')
 	if db_projects.update_many({'name' : project_name},{'$pull' : { 'hosts' : hoststr }}).modified_count > 0 :
 		return HTTPResponse(status=200,body={'status' : 'sucess'})
 	else:
@@ -99,7 +99,7 @@ def delHostFromProject():
 def cronsOfProject():
 	project_name = request.query.get('project')
 	if not project_name : return HTTPResponse(status=400,body=dumps({'error' : 'invalid request'}))
-	db_crons = functions.mongoConn('crons')
+	db_crons = common.mongoConn('crons')
 	crons = db_crons.find({"project" : project_name, 'active' : True },{ '_id' : False })
 	return dumps(crons)
 
@@ -113,7 +113,7 @@ def searchCrons():
 	command = request.query.get('command')
 
 	query = {}	
-	db_crons = functions.mongoConn('crons')
+	db_crons = common.mongoConn('crons')
 	try: namelike_regex = re.compile(namelike,re.IGNORECASE)
 	except: pass
 	if project_name : query['project'] = project_name
@@ -135,7 +135,7 @@ def editCrons():
 		return HTTPResponse(status=400,body=dumps({'error' : 'invalid request'}))
 	options_list = options.split(',')
 	new_value_list = new_value.split(',')
-	db_crons = functions.mongoConn('crons')
+	db_crons = common.mongoConn('crons')
 	if 'name' in options:
 		name_index = options.index('name')
 		db_result = db_crons.find({'name' : new_value_list[name_index] })
@@ -166,7 +166,7 @@ def addCronJob():
 	description = request.forms.get('description',' ')
 	if None in [taskname,depends,command,time,project]:
 		return HTTPResponse(status=400,body=dsumps({'error' : 'invalid request'}))
-	db_crons = functions.mongoConn('crons')
+	db_crons = common.mongoConn('crons')
 	if db_crons.count({'name' : taskname}) > 0 :
 		return HTTPResponse(status=400,body=dumps({'error' : 'taskname is already used'}))
 	depends_list = [] if (depends == [])  else depends.split(',')
@@ -180,7 +180,7 @@ def deleteCron():
 	taskname = request.query.get('task')
 	if None in [project,taskname] :
 		return HTTPResponse(status=400,body=dsumps({'error' : 'invalid request'}))
-	db_crons = functions.mongoConn('crons')
+	db_crons = common.mongoConn('crons')
 	if db_crons.delete_many({'name' : taskname}).deleted_count > 0 :
 		return HTTPResponse(status=200,body=dumps({'status' : 'success'}))
 	else: return HTTPResponse(status=200,body=dumps({'status' : 'failed'}))
@@ -192,7 +192,7 @@ def addProject():
 	user = request.query.get('user')
 	if None in [name,user]:
 		return HTTPResponse(status=400,body=dsumps({'error' : 'invalid request'}))
-	db_projects = functions.mongoConn('projects')
+	db_projects = common.mongoConn('projects')
 	if db_projects.count({'name' : name}) > 0 :
 		return HTTPResponse(status=200,body=dumps({'status' : 'failed, name already exist'}))
 	if db_projects.insert_one({'name' : name, 'user' : user, 'hosts' : [], 'active_host' : ""}):
@@ -208,10 +208,10 @@ def update():
 	update = int(request.query.get('update'))
 	if None in [project_name,update] : return HTTPResponse(status=400,body=dumps({'error' : 'invalid request'}))
 	if not update:
-		crontab_file = functions.createCrontab(project=project_name,manager_url=config.get('manager','manager_url'),enabled=True)
+		crontab_file = common.createCrontab(project=project_name,manager_url=config.get('manager','manager_url'),enabled=True)
 		return open(crontab_file,'r').read()
 	else:
-		db_projects = functions.mongoConn('projects')
+		db_projects = common.mongoConn('projects')
 		project_info = db_projects.find_one({'name' : project_name},{'hosts' : 1,'active_host' : 1, 'user' : 1})
 		try : project_info['hosts']
 		except Exception as e :
@@ -222,13 +222,13 @@ def update():
 			ipaddr = host.split(':')[0]
 			port = host.split(':')[1]
 			enable_flag = True if host in project_info['active_host'] else False
-			crontab = functions.createCrontab(project=project_name,manager_url=config.get('manager','manager_url'),enabled=enable_flag)
-			status = functions.broadcastCronJob(host=ipaddr,port=port,user=project_info['user'],filename=crontab)
+			crontab = common.createCrontab(project=project_name,manager_url=config.get('manager','manager_url'),enabled=enable_flag)
+			status = common.broadcastCronJob(host=ipaddr,port=port,user=project_info['user'],filename=crontab)
 			if not status :
 				failed_count += 1
 				failed_host[failed_count] = host
 				message = '[ERROR] Broadcasting crontab to host=%s from project=%s failed.\n Sending email to infrateam.' %(ipaddr,project_name)
-				functions.notifyAdmin(subject='Diglett : Brodcasting Failed',message=message)
+				common.notifyAdmin(subject='Diglett : Brodcasting Failed',message=message)
 				if not failed_count :
 					return HTTPResponse(status=200,body=dumps({'status' : 'success'}))
 				else:
@@ -238,7 +238,7 @@ def update():
 @route('/activehost')
 def activeHost():
 	project_name = request.query.get('project')
-	db_projects = functions.mongoConn('projects')
+	db_projects = common.mongoConn('projects')
 	if not project_name or db_projects.find({'name' : project_name}).count() != 1 :
 		return HTTPResponse(status=400,body=dumps({'error' : 'invalid request'}))
 	hosts = db_projects.find_one({"name" : project_name},{"active_host" : 1, '_id' : False})
@@ -247,7 +247,7 @@ def activeHost():
 #!/projects
 @route('/projects')
 def listProjects():
-	db_projects = functions.mongoConn('projects')
+	db_projects = common.mongoConn('projects')
 	projects = db_projects.find({},{"name" : 1, '_id' : False})
 	return HTTPResponse(status=200,body=dumps(projects))
 
@@ -257,7 +257,7 @@ def activateHost():
 	project = request.query.get('project')
 	host = request.query.get('host')
 	if None in [project,host]: return HTTPResponse(status=400,body={'error' : 'invalid request'})
-	db_projects = functions.mongoConn('projects')
+	db_projects = common.mongoConn('projects')
 	update = db_projects.update_one({'name' : project},{'$set': { 'active_host' : host } })
 	if update.modified_count == 1 :
 		return HTTPResponse(status=200,body=dumps({'status' : 'success'}))

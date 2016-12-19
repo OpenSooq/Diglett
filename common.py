@@ -25,7 +25,7 @@ config.read('config.ini')
 # current working directory
 here = os.path.dirname(__file__)
 
-class Functions(object):
+class DiglettCommon(object):
 	def mongoConn(self,collection):
 		client = MongoClient(host=config.get('mongo','host'),port=int(config.get('mongo','port')))
 		db_conn = client[config.get('mongo','dbname')]
