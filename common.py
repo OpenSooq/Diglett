@@ -2,10 +2,13 @@ from ConfigParser import SafeConfigParser
 from pymongo import MongoClient
 from subprocess import Popen,PIPE,STDOUT
 from bson.json_util import dumps
+from email.mime.text import MIMEText
+from urllib2 import quote as urlquote
 from IPy import IP
 import requests
 import paramiko
 import datetime
+import smtplib
 import logging
 import time
 import re
@@ -78,11 +81,13 @@ class Functions(object):
 	def insertFinishedTask(self,taskname,status_code,log,stime):
 		now = datetime.datetime.now()
 		running_time = (now - datetime.datetime.fromtimestamp(stime)).total_seconds()
+		crons = self.mongoConn('crons')
+		history = self.mongoConn('history')
+		if int(status_code) != 0 :
+			try : self.notifyAdmin(subject='Diglett: %s failed'%taskname, message=log)
+			except Exception as e : 
+				 logger.error("could not notify admin : %r",e)
 		try:
-			crons = self.mongoConn('crons')
-			history = self.mongoConn('history')
-			if int(status_code) != 0 :
-				self.notifyAdmin(subject='Diglett: %s failed'%taskname, message=log) 
 			update_cron = crons.update_one({ "name" : taskname},{ "$set" : { "last_run_at" : now, "last_run_status" : status_code }})
 			update_history = history.update_one({"name" : taskname, "start_time" : stime},{ "$set" : {"status_code" : status_code, "running_time" : running_time , "log" : log}})
 		except Exception as e:
@@ -143,13 +148,32 @@ class Functions(object):
 			return False
 	
 	def sendEmailSMTP(self,subject,message):
-		# To do
-		return True
+		"""
+		send notification email
+		"""
+		msg = MIMEText(message)
+		msg['Subject'] = subject
+		msg['From'] = config.get('smtp-settings','sender')
+		msg['To'] = ', '.join(config.get('smtp-settings','mail_to'))
+
+		# Send the message via our own SMTP server.
+		s = smtplib.SMTP()
+		s.connect(config.get('smtp-settings','smtplib'))
+		s.login(user=config.get('smtp-settings','username'),
+				password=config.get('smtp-settings','password'))
+		try : 
+			s.sendmail(msg['From'], msg['To'], msg=msg.as_string())
+			s.quit()
+			return True
+		except Exception as e:
+			self.notifyAdmin(subject='Diglett : Failed to send email using smtp', message=str(e)) 
+			s.quit()
+			return False
 
 	def sendSimplePushNotification(self,title,message,keys=config.get('simplepush','keys')):
 		for key in keys.split(','):
-			request_url='%s/%s/%s/%s' %(config.get('simplepush','URL'),key,title,message)
-			req=requests.get(request_url)
+			request_url='%s/%s/%s/%s' %(config.get('simplepush','URL'),title,message)
+			req=requests.get(urlquote(request_url))
 			if req.status_code != requests.codes.ok :
 				logger.error("Failed to send push notification to Key=%r, URL= %r, RESPONSE= %r",key,req.url, req.text)
 		return True

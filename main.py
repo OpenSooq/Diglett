@@ -2,15 +2,15 @@ from bottle import Bottle,run, route, request, default_app, HTTPResponse, respon
 from ConfigParser import SafeConfigParser
 from bson.json_util import dumps
 from common import Functions
+import logging
+import datetime
+import pymongo
 import bottle
 import time
 import os
 import glob
 import sys
 import re
-import logging
-import datetime
-import pymongo
 
 # Config Parsing
 config = SafeConfigParser()
@@ -110,27 +110,19 @@ def searchCrons():
 	namelike = request.query.get('namelike')
 	tfrom = request.query.get('from')
 	to = request.query.get('to')
+	command = request.query.get('command')
 
-	try: regex = re.compile(namelike,re.IGNORECASE)
-	except: pass
-	namelike = '^%s.*%s.*' %(project_name,namelike) if namelike != None else None
+	query = {}	
 	db_crons = functions.mongoConn('crons')
-
-	if namelike and (len(tfrom) + len(to)) == 0:
-		db_result = db_crons.find({'project' : project_name ,'name' : { '$regex' : regex } })
-		return dumps(db_result)
-
-	if (len(tfrom) + len(to)) > 0 :
-		today = datetime.datetime.now().strftime('%Y-%m-%d')
-		if tfrom == '' : tfrom = '00:00:00'
-		if to == '' : to = datetime.datetime.now().strftime('%H:%M:%S')
-		tfrom = datetime.datetime.strptime('%s %s' %(today,tfrom), '%Y-%m-%d %H:%M:%S')
-		to = datetime.datetime.strptime('%s %s' %(today,to), '%Y-%m-%d %H:%M:%S')
-		if namelike :
-			db_result = db_crons.find({'project' : project_name ,'name' : { '$regex' : regex } , 'last_run_at' : { '$gte' : tfrom, '$lt' : to}})
-		else:
-			db_result = db_crons.find({'project' : project_name ,'last_run_at' : { '$gte' : tfrom, '$lt' : to} })
-		return dumps(db_result)
+	try: namelike_regex = re.compile(namelike,re.IGNORECASE)
+	except: pass
+	if project_name : query['project'] = project_name
+	if namelike : query['name'] = { '$regex' : namelike_regex }
+	if to : query['to'] = datetime.datetime.strptime(to, '%Y-%m-%d %H:%M:%S')
+	if tfrom : query['from'] = datetime.datetime.strptime(tfrom, '%Y-%m-%d %H:%M:%S')
+	if command : query['command'] = {'$regex' : '*%s.*' %command}
+	db_result = db_crons.find(query)
+	return dumps(db_result)
 
 #/editcron?task=taskname&set=option&to=
 #/editcron?name=taskname&time=
@@ -278,8 +270,8 @@ def lastLog():
 	taskname = request.query.get('taskname')
 	if None in [taskname]: return HTTPResponse(status=400,body={'error' : 'invalid request'})
 	db_history = functions.mongoConn('history')
-	#db.history.find({name : "gulpin.notify_no_posts", log : {$exists : true}},{log : 1, _id : 0}).sort({start_time : -1}).limit(1)
 	log = db_history.find({'name' : taskname, "log" : {"$exists" : True}},{"log" : True, "_id" : False},sort=[('start_time', pymongo.DESCENDING)], limit=1)
+	data = ''
 	for doc in log :
 		data = '<pre>%s</pre>' %doc['log']
 		break
