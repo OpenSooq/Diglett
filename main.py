@@ -269,7 +269,7 @@ def activateHost():
 def lastLog():
 	taskname = request.query.get('taskname')
 	if None in [taskname]: return HTTPResponse(status=400,body={'error' : 'invalid request'})
-	db_history = functions.mongoConn('history')
+	db_history = common.mongoConn('history')
 	log = db_history.find({'name' : taskname, "log" : {"$exists" : True}},{"log" : True, "_id" : False},sort=[('start_time', pymongo.DESCENDING)], limit=1)
 	data = ''
 	for doc in log :
