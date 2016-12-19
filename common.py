@@ -84,7 +84,7 @@ class DiglettCommon(object):
 		crons = self.mongoConn('crons')
 		history = self.mongoConn('history')
 		if int(status_code) != 0 :
-			try : self.notifyAdmin(subject='Diglett: %s failed'%taskname, message=log)
+			try : self.notifyAdmin(subject='Diglett: %s failed' %taskname, message=log)
 			except Exception as e : 
 				 logger.error("could not notify admin : %r",e)
 		try:
@@ -141,7 +141,7 @@ class DiglettCommon(object):
 			stdin, stdout, stderr = ssh.exec_command(command,get_pty=True)
 			if not stderr.readlines() : return True
 			else :
-				logger.error('error in running ssh.exec_command : %r',stderr.readlines())
+				logger.error('running ssh.exec_command : %r',stderr.readlines())
 				return False
 		except Exception as e:
 			logger.error('exception while trying to open_sftp or exec_command : %r',e)
@@ -171,15 +171,18 @@ class DiglettCommon(object):
 			return False
 
 	def sendSimplePushNotification(self,title,message,keys=config.get('simplepush','keys')):
+		message = "Check email for more details"
 		for key in keys.split(','):
-			request_url='%s/%s/%s/%s' %(config.get('simplepush','URL'),title,message)
-			req=requests.get(urlquote(request_url))
+			request_url='%s/%s/%s/%s' %(config.get('simplepush','URL'),key,title,message)
+			req=requests.get(request_url)
+			logger.debug("Sending push notification : %s",request_url)
 			if req.status_code != requests.codes.ok :
 				logger.error("Failed to send push notification to Key=%r, URL= %r, RESPONSE= %r",key,req.url, req.text)
 		return True
 	
 	def basicEmailUtil(self,subject,message):
-		command = 'echo %r | mail -s "%s"  %r' %(message,subject,config.get('email-util','mail_to'))
+		command = 'echo %r | mail -s "%s"  %s' %(message,subject,config.get('email-util','mail_to'))
+		logger.debug("Sending email : %s",command)
 		process = Popen(command, stdout=PIPE, stderr=STDOUT, shell=True)
 		out, err = process.communicate()
 		if err:
@@ -199,5 +202,5 @@ class DiglettCommon(object):
 			if not alerting_method_function.get(method) : 
 				logger.error('Unexpected method [%r] in alerting method in config.ini',method)
 				continue
-			if not alerting_method_function[method](subject,message):
-				logger.error('Failed to notify using method %r',alerting_method_function)
+			try : alerting_method_function[method](subject,message)
+			except Exception as e: logger.error('Notifying using method %r caused %r',method,e)

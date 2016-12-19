@@ -50,7 +50,7 @@ def finishSignal():
 	status= request.forms.get('status')
 	task= request.forms.get('task')
 	log_file= request.files.get('log')
-	start_time = int(request.forms.get('start_time'))
+	start_time = int(request.forms.get('start_time',0))
 	log_data = log_file.file.read()
 	if not task:
 		logger.info("invalid /finish request.")
