@@ -181,6 +181,7 @@ class DiglettCommon(object):
 		return True
 	
 	def basicEmailUtil(self,subject,message):
+		if len(message) > 1000 : message = message[-1000:]
 		command = 'echo %r | mail -s "%s"  %s' %(message,subject,config.get('email-util','mail_to'))
 		logger.debug("Sending email : %s",command)
 		process = Popen(command, stdout=PIPE, stderr=STDOUT, shell=True)
