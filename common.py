@@ -181,15 +181,18 @@ class DiglettCommon(object):
 		return True
 	
 	def basicEmailUtil(self,subject,message):
-		if len(message) > 1000 : message = message[-1000:]
-		command = 'echo %r | mail -s "%s"  %s' %(message,subject,config.get('email-util','mail_to'))
-		logger.debug("Sending email : %s",command)
-		process = Popen(command, stdout=PIPE, stderr=STDOUT, shell=True)
-		out, err = process.communicate()
+		from email.mime.text import MIMEText
+		from subprocess import Popen, PIPE
+		
+		msg = MIMEText(message)
+		msg["To"] = config.get('email-util','mail_to')
+		msg["Subject"] = subject
+		p = Popen(["/usr/sbin/sendmail", "-t", "-oi"], stdin=PIPE)
+		out,err = p.communicate(msg.as_string())
 		if err:
 			logger.error('Failed to send email %r',err)
 			return False
-		else: return not int(process.returncode)
+		else: return not int(p.returncode)
 		
 	def notifyAdmin(self,subject,message):
 		alerting_method_function={
