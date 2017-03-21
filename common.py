@@ -83,6 +83,7 @@ class DiglettCommon(object):
 		running_time = (now - datetime.datetime.fromtimestamp(stime)).total_seconds()
 		crons = self.mongoConn('crons')
 		history = self.mongoConn('history')
+		if sys.getsizeof(log) > 4e+6 : log = log[-2000:0]
 		if int(status_code) != 0 :
 			try : self.notifyAdmin(subject='Diglett: %s failed' %taskname, message=log)
 			except Exception as e : 
