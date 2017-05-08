@@ -1,0 +1,21 @@
+[Unit]
+Description=Dugtrio Watchdog
+After=network.target
+Requires=network.target
+
+[Service]
+# the user that runs the service
+User=diglett
+Group=diglett
+Type=notify
+NotifyAccess=all
+LimitNOFILE=infinity
+CPUAccounting=True
+BlockIOAccounting=True
+MemoryAccounting=True
+Restart=always
+KillSignal=SIGQUIT
+ExecStart=/bin/bash -l -c "cd ~/diglett/ && exec python watchdog.py"
+
+[Install]
+WantedBy=multi-user.target

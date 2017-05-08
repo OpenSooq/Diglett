@@ -1,6 +1,8 @@
 # Diglett
 A cron management system that manage all your cronjobs over multiple servers without modifying crontab. Handles locking, logging, and more.
 
+
+
 ![screen shot 2016-06-15 at 10 38 34 pm](https://cloud.githubusercontent.com/assets/4533327/16156450/fd6a956a-34bc-11e6-9cb5-15c9a236772e.png)
 
 You can choose any project you have and see all crons with time of execution and last status of every cron. In addition to manage these crons via UI. 
@@ -28,6 +30,10 @@ Mainly depends on mail-utlis on linux system, therefore it should be installed o
 For now, Diglett is using only one push notification backend called SimplePush. To use it, you should install the application on your Android and insert the key in config.ini file.
 
 Also, you can disable the push notification feature from the same file.
+
+## What's New
+-------------------
+Diglett now has a systemD service that monitor active hosts and change them in case of faliures.
 
 Installation
 --------------------
@@ -85,4 +91,10 @@ $ mongo diglett < examples/initialize_db.js
 $ sudo systemctl enable nginx && sudo systemctl start nginx
 $ sudo systemctl enable mongod && sudo systemctl start mongod
 $ sudo systemctl start diglett@3030
+```
+- Start the Diglett-WatchDog service
+```
+$ sudo cp ~/diglett/examples/diglett-watchdog.service /etc/systemd/system/
+$ systemctl enable diglett-watchdog.service 
+$ systemctl start diglett-watchdog.service 
 ```
